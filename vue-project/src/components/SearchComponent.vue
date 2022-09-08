@@ -1,7 +1,7 @@
 <script setup lang="ts">
 
-import {reactive, ref} from "vue";
-import type { Ref } from 'vue';
+import {computed, reactive, ref, watch} from "vue";
+import type {Ref} from 'vue';
 
 interface Row {
   name: string,
@@ -12,12 +12,12 @@ const data: Row[] = [
   {name: 'Hjkjgbd', number: 1454},
   {name: 'Garbage', number: 58},
   {name: 'JS', number: 1000},
+  {name: 'This', number: 785},
   {name: 'Nononono', number: 5000},
   {name: 'Stop', number: 1500},
-  {name: 'This', number: 785},
 ];
 
-const state: {data: Row[]} = reactive({
+const state: { data: Row[] } = reactive({
   data: data
 })
 
@@ -27,12 +27,22 @@ const toggle = reactive({
   number: false
 });
 
+const arrowCode = computed(() => {
+  return {
+    name: toggle.name ? '8593' : '8681',
+    number: toggle.number ? '8593' : '8681'
+  }
+})
+
 
 function sortData(prop: 'number' | 'name') {
+
   if (prop === 'name') {
-    state.data.sort( (row1, row2) => sortByString(row1.name, row2.name))
+    state.data.sort((row1, row2) => {
+      return ('' + row1.name).localeCompare(row2.name);
+    })
   } else {
-    state.data.sort();
+    state.data.sort((a, b) => a.number - b.number);
   }
 
   if (!toggle[prop]) {
@@ -42,29 +52,30 @@ function sortData(prop: 'number' | 'name') {
   toggle[prop] = !toggle[prop];
 }
 
-function sortByString(str1: string, str2: string) {
-  str1 = str1.toLowerCase();
-  str2 = str2.toLowerCase();
-
-  if (str1 < str2) return -1;
-  if (str1 > str1)  return 1;
-  return 0;
-}
+watch(input, () => {
+  state.data = data.filter( (row) => row.name.includes(input.value) || row.number.toString().includes(input.value) )
+})
 </script>
 
 <template>
-  Search:
-  <input type="text" v-model="input" />
-  <table>
-    <tr>
-      <th><button @click="sortData('name')">Name<span :class="{revert: toggle.name}">&#8681;</span></button></th>
-      <th><button @click="sortData('number')">Number<span :class="{revert: toggle.number}">&#8681;</span></button></th>
-    </tr>
-    <tr v-for="row of state.data">
-      <td>{{row.name}}</td>
-      <td>{{row.number}}</td>
-    </tr>
-  </table>
+  <div class="container">
+    Search:
+    <input type="text" v-model="input"/>
+    <table>
+      <tr>
+        <th>
+          <button @click="sortData('name')"><span v-html="'Name ' + '&#' + arrowCode.name + ';'"></span></button>
+        </th>
+        <th>
+          <button @click="sortData('number')" v-html="'Number ' + '&#' + arrowCode.number + ';'"></button>
+        </th>
+      </tr>
+      <tr v-for="row of state.data">
+        <td>{{ row.name }}</td>
+        <td>{{ row.number }}</td>
+      </tr>
+    </table>
+  </div>
 </template>
 
 <style lang="scss">
@@ -72,9 +83,11 @@ table {
   tr:nth-of-type(even) {
     background-color: azure;
   }
+
   tr:nth-of-type(odd) {
     background-color: darkgray;
   }
+
   th {
     background-color: cornflowerblue;
   }
